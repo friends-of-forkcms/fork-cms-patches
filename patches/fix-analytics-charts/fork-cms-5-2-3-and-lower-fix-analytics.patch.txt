@@ -1,0 +1,47 @@
+From c4dc01f9633859ae590abfb028f8e7e2c21a237a Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Thu, 26 Apr 2018 10:11:03 +0200
+Subject: [PATCH] Fix for Analytics charts
+
+---
+ src/Backend/Modules/Analytics/Js/Analytics.js | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/src/Backend/Modules/Analytics/Js/Analytics.js b/src/Backend/Modules/Analytics/Js/Analytics.js
+index a96d04d4ff..f72590d7ba 100644
+--- a/src/Backend/Modules/Analytics/Js/Analytics.js
++++ b/src/Backend/Modules/Analytics/Js/Analytics.js
+@@ -3,12 +3,15 @@
+  */
+ /* global Highcharts */
+ jsBackend.analytics = {
+-  $chartPieChart: $('#chartPieChart'),
+-  $chartDoubleMetricPerDay: $('#chartDoubleMetricPerDay')
++  $chartPieChart: null,
++  $chartDoubleMetricPerDay: null
+ }
+ 
+ jsBackend.analytics.charts = {
+   init: function () {
++    jsBackend.analytics.$chartPieChart = $('#chartPieChart')
++    jsBackend.analytics.$chartDoubleMetricPerDay = $('#chartDoubleMetricPerDay')
++
+     if (jsBackend.analytics.$chartPieChart.length > 0 || jsBackend.analytics.$chartDoubleMetricPerDay.length > 0) {
+       Highcharts.setOptions({
+         colors: ['#2f77d1', '#021b45', '#ED561B', '#EDEF00', '#24CBE5', '#64E572', '#FF9655'],
+@@ -24,6 +27,9 @@ jsBackend.analytics.charts = {
+         }
+       })
+     }
++
++    jsBackend.analytics.chartPieChart.init()
++    jsBackend.analytics.chartDoubleMetricPerDay.init()
+   }
+ }
+ 
+@@ -180,3 +186,5 @@ jsBackend.analytics.chartDoubleMetricPerDay = {
+     jsBackend.analytics.chartDoubleMetricPerDay.chart.destroy()
+   }
+ }
++
++$(jsBackend.analytics.charts.init)

@@ -1,0 +1,73 @@
+From fb0c1c6a13488536e02436b96dffeae2c4bec15d Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Mon, 26 Mar 2018 09:21:52 +0200
+Subject: [PATCH] Fetch AJAX error when there is no $module
+
+Website scrapers oftenly scrape the `frontend/ajax` URL
+Now we fetch a empty $module
+---
+ frontend/core/engine/ajax.php | 35 ++++++++++++++++++++---------------
+ 1 file changed, 20 insertions(+), 15 deletions(-)
+
+diff --git a/frontend/core/engine/ajax.php b/frontend/core/engine/ajax.php
+index 524e2be..cde3cab 100755
+--- a/frontend/core/engine/ajax.php
++++ b/frontend/core/engine/ajax.php
+@@ -48,20 +48,20 @@ class FrontendAJAX
+ 		if($language == '' && isset($_GET['language'])) $language = $_GET['language'];
+ 		if($language == '') $language = SITE_DEFAULT_LANGUAGE;
+ 
+-		// set the module
+-		$this->setModule($module);
++		try
++		{
++            // set the module
++            $this->setModule($module);
+ 
+-		// set the action
+-		$this->setAction($action);
++            // set the action
++            $this->setAction($action);
+ 
+-		// set the language
+-		$this->setLanguage($language);
++            // set the language
++            $this->setLanguage($language);
+ 
+-		// create a new action
+-		$action = new FrontendAJAXAction($this->getAction(), $this->getModule());
++            // create a new action
++            $action = new FrontendAJAXAction($this->getAction(), $this->getModule());
+ 
+-		try
+-		{
+ 			// execute the action
+ 			$action->execute();
+ 		}
+@@ -146,13 +146,18 @@ class FrontendAJAX
+ 		FrontendLanguage::setLocale($this->language);
+ 	}
+ 
+-	/**
+-	 * Set module
+-	 *
+-	 * @param string $value The module, wherefore an action will be executed.
+-	 */
++    /**
++     * Set module
++     *
++     * @param string $value The module, wherefore an action will be executed.
++     * @throws FrontendException
++     */
+ 	public function setModule($value)
+ 	{
++	    if (($value === '') || ($value === null)) {
++	        throw new FrontendException('Module variable must be set.');
++        }
++
+ 		// set property
+ 		$this->module = (string) $value;
+ 	}
+-- 
+2.15.1
+

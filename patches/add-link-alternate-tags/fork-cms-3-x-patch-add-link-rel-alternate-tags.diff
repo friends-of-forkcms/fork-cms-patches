@@ -1,0 +1,94 @@
+From 190c8138bde62f57aebc9987d951ed9f543849fd Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Fri, 2 Dec 2016 14:54:39 +0100
+Subject: [PATCH] =?UTF-8?q?Integrated=20<link=20rel=3D=E2=80=9Calternate?=
+ =?UTF-8?q?=E2=80=9D=20hreflang=3D=E2=80=9Cx=E2=80=9D=20=E2=80=A6=20to=20w?=
+ =?UTF-8?q?ebsite?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ frontend/core/engine/header.php |  4 ++--
+ frontend/core/engine/page.php   | 37 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 frontend/core/engine/header.php
+ mode change 100644 => 100755 frontend/core/engine/page.php
+
+diff --git a/frontend/core/engine/header.php b/frontend/core/engine/header.php
+old mode 100644
+new mode 100755
+index e1d9c78..b1e233f
+--- a/frontend/core/engine/header.php
++++ b/frontend/core/engine/header.php
+@@ -221,7 +221,7 @@ class FrontendHeader extends FrontendBaseObject
+ 		$overwrite = (bool) $overwrite;
+ 		$uniqueKeys = (array) $uniqueKeys;
+ 
+-		if($uniqueKeys == null) $uniqueKeys = array('rel', 'type', 'title');
++		if($uniqueKeys == null) $uniqueKeys = array('rel', 'hreflang', 'type', 'title');
+ 
+ 		// stop if the content is empty
+ 		if(isset($attributes['href']) && $attributes['href'] == '') return;
+@@ -844,7 +844,7 @@ class FrontendHeader extends FrontendBaseObject
+ 	private function parseSeo()
+ 	{
+ 		// any canonical URL provided?
+-		if($this->canonical != '') $url = $this->canonical;
++        if($this->canonical != '') $url = $this->canonical;
+ 
+ 		else
+ 		{
+diff --git a/frontend/core/engine/page.php b/frontend/core/engine/page.php
+old mode 100644
+new mode 100755
+index 75cf112..e630452
+--- a/frontend/core/engine/page.php
++++ b/frontend/core/engine/page.php
+@@ -241,6 +241,43 @@ class FrontendPage extends FrontendBaseObject
+ 				SpoonHTTP::redirect($URL, 301);
+ 			}
+ 		}
++
++        // Multi language is activated
++        if (SITE_MULTILANGUAGE) {
++            // Init links
++            $links = array();
++
++            // Get languages
++            $activeLanguages = FrontendLanguage::getActiveLanguages();
++
++            // Loop active languages
++            foreach ($activeLanguages as $language) {
++                // Define url
++                $url = FrontendNavigation::getURL($this->pageId, $language);
++
++                // Ignore 404 links
++                if ($url === FrontendNavigation::getURL(404, $language)) {
++                    continue;
++                }
++
++                // Convert relative to absolute url
++                if (substr($url, 0, 1) == '/') {
++                    $url = SITE_URL . $url;
++                }
++
++                $links[$language] = $url;
++            }
++
++            // We must only add links if we have more then one
++            if (count($links) > 1) {
++                foreach ($links as $language => $url) {
++                    // Add hreflang
++                    $this->header->addLink(
++                        array('rel' => 'alternate', 'hreflang' => $language, 'href' => $url)
++                    );
++                }
++            }
++        }
+ 	}
+ 
+ 	/**
+-- 
+2.8.1
+

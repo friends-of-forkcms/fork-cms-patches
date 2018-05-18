@@ -1,0 +1,254 @@
+From 3e89dd2ef3f51ebdb9890146f634e90574a056d5 Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Thu, 17 May 2018 15:34:17 +0200
+Subject: [PATCH] Add cookiebar integration
+
+---
+ backend/modules/settings/actions/index.php         |  5 ++++
+ .../modules/settings/layout/templates/index.tpl    | 20 +++++++++++++
+ delta.xml                                          | 28 +++++++++++++++++
+ frontend/core/engine/page.php                      | 35 ++++++++++++++++++++++
+ frontend/core/js/frontend.js                       | 33 ++++++++++++++++++++
+ frontend/core/js/utils.js                          |  2 +-
+ frontend/core/layout/templates/cookies.tpl         |  7 +++++
+ .../triton/core/layout/templates/default.tpl       |  2 ++
+ 8 files changed, 131 insertions(+), 1 deletion(-)
+ create mode 100644 delta.xml
+ create mode 100644 frontend/core/layout/templates/cookies.tpl
+
+diff --git a/backend/modules/settings/actions/index.php b/backend/modules/settings/actions/index.php
+index f520558..7954152 100755
+--- a/backend/modules/settings/actions/index.php
++++ b/backend/modules/settings/actions/index.php
+@@ -131,6 +131,9 @@ class BackendSettingsIndex extends BackendBaseActionIndex
+ 		// api keys are not required for every module
+ 		if($this->needsAkismet) $this->frm->addText('akismet_key', BackendModel::getModuleSetting('core', 'akismet_key', null));
+ 		if($this->needsGoogleMaps) $this->frm->addText('google_maps_key', BackendModel::getModuleSetting('core', 'google_maps_key', null));
++
++        // cookies
++        $this->frm->addCheckbox('show_cookie_bar', BackendModel::getModuleSetting('core', 'show_cookie_bar', false));
+ 	}
+ 
+ 	/**
+@@ -229,6 +232,8 @@ class BackendSettingsIndex extends BackendBaseActionIndex
+ 			// no errors ?
+ 			if($this->frm->isCorrect())
+ 			{
++                BackendModel::setModuleSetting('core', 'show_cookie_bar', $this->frm->getField('show_cookie_bar')->isChecked());
++
+ 				// general settings
+ 				BackendModel::setModuleSetting('core', 'site_title_' . BL::getWorkingLanguage(), $this->frm->getField('site_title')->getValue());
+ 				BackendModel::setModuleSetting('core', 'site_html_header', $this->frm->getField('site_html_header')->getValue());
+diff --git a/backend/modules/settings/layout/templates/index.tpl b/backend/modules/settings/layout/templates/index.tpl
+index f4cb9a7..cefb090 100755
+--- a/backend/modules/settings/layout/templates/index.tpl
++++ b/backend/modules/settings/layout/templates/index.tpl
+@@ -203,6 +203,26 @@
+ 		</div>
+ 	</div>
+ 
++	<div class="row fork-module-content">
++		<div class="col-md-12">
++			<div class="panel panel-default">
++				<div class="panel-heading">
++					<h2 class="panel-title">{$lblCookies|ucfirst}</h2>
++				</div>
++				<div class="panel-body">
++					<div class="form-group last">
++						<p>{$msgHelpCookies}</p>
++						<ul class="list-unstyled">
++							<li class="checkbox">
++								<label for="showCookieBar" class="control-label">{$chkShowCookieBar} {$msgShowCookieBar|ucfirst}</label>
++							</li>
++						</ul>
++					</div>
++				</div>
++			</div>
++		</div>
++	</div>
++
+ 	<div class="fullwidthOptions">
+ 		<div class="buttonHolderRight">
+ 			<input id="save" class="inputButton button mainButton" type="submit" name="save" value="{$lblSave|ucfirst}" />
+diff --git a/delta.xml b/delta.xml
+new file mode 100644
+index 0000000..5593e1d
+--- /dev/null
++++ b/delta.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<locale>
++    <frontend>
++        <core>
++            <item type="message" name="CookiesWarning">
++                <translation language="nl"><![CDATA[Om de gebruikerservaring van deze site te verbeteren gebruikt deze website <a href="/voorwaarden-en-disclaimer">cookies</a>.]]></translation>
++                <translation language="en"><![CDATA[To improve the user experience on this site we use <a href="/voorwaarden-en-disclaimer">cookies</a>.]]></translation>
++                <translation language="fr"><![CDATA[Pour améliorer l'expérience utilisateur sur ce site, nous utilisons des <a href="/voorwaarden-en-disclaimer">cookies</a>.]]></translation>
++                <translation language="de"><![CDATA[Wir verwenden <a href="/voorwaarden-en-disclaimer">Cookies</a> um Ihr Benutzer-Erlebnis zu verbessern.]]></translation>
++                <translation language="es"><![CDATA[Para mejorar la experiencia del usuario en este sitio utilizamos <a href="/voorwaarden-en-disclaimer">cookies</a>.]]></translation>
++            </item>
++            <item type="label" name="IAgree">
++                <translation language="nl"><![CDATA[ik ga akkoord]]></translation>
++                <translation language="en"><![CDATA[I agree]]></translation>
++                <translation language="fr"><![CDATA[je suis d'accord]]></translation>
++                <translation language="de"><![CDATA[ich bin einverstanden]]></translation>
++                <translation language="es"><![CDATA[estoy de acuerdo]]></translation>
++            </item>
++            <item type="label" name="IDisagree">
++                <translation language="nl"><![CDATA[ik ga niet akkoord]]></translation>
++                <translation language="en"><![CDATA[I disagree]]></translation>
++                <translation language="fr"><![CDATA[je ne suis pas d'accord]]></translation>
++                <translation language="de"><![CDATA[ich bin nicht einverstanden]]></translation>
++                <translation language="es"><![CDATA[no estoy de acuerdo]]></translation>
++            </item>
++        </core>
++    </frontend>
++</locale>
+\ No newline at end of file
+diff --git a/frontend/core/engine/page.php b/frontend/core/engine/page.php
+index 75cf112..a03ae44 100755
+--- a/frontend/core/engine/page.php
++++ b/frontend/core/engine/page.php
+@@ -372,6 +372,34 @@ class FrontendPage extends FrontendBaseObject
+ 		}
+ 	}
+ 
++    /**
++     * Has the visitor allowed cookies?
++     *
++     * @return bool
++     */
++    public function hasAllowedCookies()
++    {
++        try {
++            return \SpoonCookie::get('cookie_bar_agree') === 'N';
++        } catch (SpoonCookieException $e) {
++            return false;
++        }
++    }
++
++    /**
++     * Has the cookiebar been hidden by the visitor
++     *
++     * @return bool
++     */
++    public function hasHiddenCookieBar()
++    {
++        try {
++            return \SpoonCookie::get('cookie_bar_hide') === 'Y';
++        } catch (SpoonCookieException $e) {
++            return false;
++        }
++    }
++
+ 	/**
+ 	 * Processes the page
+ 	 */
+@@ -395,6 +423,13 @@ class FrontendPage extends FrontendBaseObject
+ 		// assign content
+ 		$this->tpl->assign('page', $this->record);
+ 
++        // hide the cookiebar from within the code to prevent flickering
++        $this->tpl->assign(
++            'cookieBarHide',
++            !FrontendModel::getModuleSetting('core', 'show_cookie_bar', false)
++            || $this->hasHiddenCookieBar()
++        );
++
+ 		// set template path
+ 		$this->templatePath = FRONTEND_PATH . '/' . $this->record['template_path'];
+ 
+diff --git a/frontend/core/js/frontend.js b/frontend/core/js/frontend.js
+index ef7eb53..4712863 100755
+--- a/frontend/core/js/frontend.js
++++ b/frontend/core/js/frontend.js
+@@ -21,6 +21,8 @@ var jsFrontend =
+ 		// init controls
+ 		jsFrontend.controls.init();
+ 
++		jsFrontend.cookieBar.init()
++
+ 		// init form
+ 		jsFrontend.forms.init();
+ 
+@@ -73,6 +75,37 @@ jsFrontend.controls =
+ 	}
+ }
+ 
++/**
++ * Handles the cookieBar
++ */
++jsFrontend.cookieBar = {
++  init: function () {
++    // if there is no cookiebar we shouldn't do anything
++    if ($('#cookieBar').length === 0) return
++
++    var $cookieBar = $('#cookieBar')
++
++    // @remark: as you can see we use PHP-serialized values so we can use them in PHP too.
++    // hide the cookieBar if needed
++    if (utils.cookies.readCookie('cookie_bar_hide') === 'b%3A1%3B') {
++      $cookieBar.hide()
++    }
++
++    $('[data-role="cookie-bar-button"]').click(function (e) {
++      e.preventDefault()
++
++      if ($(e.currentTarget).data('action') === 'agree') {
++        utils.cookies.setCookie('cookie_bar_agree', 'b:1;')
++        utils.cookies.setCookie('cookie_bar_hide', 'b:1;')
++      } else {
++        utils.cookies.setCookie('cookie_bar_agree', 'b:0;')
++        utils.cookies.setCookie('cookie_bar_hide', 'b:1;')
++      }
++      $cookieBar.hide()
++    })
++  }
++}
++
+ /**
+  * Data related methods
+  * 
+diff --git a/frontend/core/js/utils.js b/frontend/core/js/utils.js
+index b650df2..0dd48a9 100755
+--- a/frontend/core/js/utils.js
++++ b/frontend/core/js/utils.js
+@@ -89,7 +89,7 @@ utils.cookies =
+ 	setCookie: function(name, value, days)
+ 	{
+ 		if(typeof days == 'undefined') days = 7;
+-		
++
+ 		var expireDate = new Date();
+ 		expireDate.setDate(expireDate.getDate() + days);
+ 		document.cookie = name + '=' + escape(value) + ';expires=' + expireDate.toUTCString() + ';path=/';
+diff --git a/frontend/core/layout/templates/cookies.tpl b/frontend/core/layout/templates/cookies.tpl
+new file mode 100644
+index 0000000..28eb884
+--- /dev/null
++++ b/frontend/core/layout/templates/cookies.tpl
+@@ -0,0 +1,7 @@
++{option:!cookieBarHide}
++    <div id="cookieBar" class="fullWidthAlert alert">
++        {$msgCookiesWarning}
++        <a href="#" id="cookieBarAgree" data-role="cookie-bar-button" data-action="agree">{$lblIAgree|ucfirst}</a>
++        <a href="#" id="cookieBarDisagree" data-role="cookie-bar-button" data-action="hide">{$lblIDisagree|ucfirst}</a>
++    </div>
++{/option:!cookieBarHide}
+\ No newline at end of file
+diff --git a/frontend/themes/triton/core/layout/templates/default.tpl b/frontend/themes/triton/core/layout/templates/default.tpl
+index b15a640..020eda5 100755
+--- a/frontend/themes/triton/core/layout/templates/default.tpl
++++ b/frontend/themes/triton/core/layout/templates/default.tpl
+@@ -1,6 +1,8 @@
+ {include:core/layout/templates/head.tpl}
+ 
+ <body class="{$LANGUAGE}" itemscope itemtype="http://schema.org/WebPage">
++	{include:core/layout/templates/cookies.tpl}
++
+ 	<div id="topWrapper">
+ 		<header id="header">
+ 			<div class="container">
+-- 
+2.16.2
+

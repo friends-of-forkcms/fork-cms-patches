@@ -1,0 +1,147 @@
+From 66df1a3b0959291d45599bd1e670fc4674ad02d4 Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Mon, 7 May 2018 15:49:54 +0200
+Subject: [PATCH] Fix analytics
+
+---
+ src/Backend/Core/Js/backend.js                |  2 --
+ src/Backend/Modules/Analytics/Js/Analytics.js | 36 ++++++++++++---------------
+ 2 files changed, 16 insertions(+), 22 deletions(-)
+
+diff --git a/src/Backend/Core/Js/backend.js b/src/Backend/Core/Js/backend.js
+index aa6f514..da2f728 100644
+--- a/src/Backend/Core/Js/backend.js
++++ b/src/Backend/Core/Js/backend.js
+@@ -2010,8 +2010,6 @@ jsBackend.resizeFunctions = {
+                 jsBackend.navigation.resize();
+                 if (typeof jsBackend.analytics !== 'undefined'){
+                     jsBackend.analytics.charts.init();
+-                    jsBackend.analytics.chartDoubleMetricPerDay.init();
+-                    jsBackend.analytics.chartPieChart.init();
+                 }
+                 return ticking = false;
+             };
+diff --git a/src/Backend/Modules/Analytics/Js/Analytics.js b/src/Backend/Modules/Analytics/Js/Analytics.js
+index 1d31aef..2b5e7b8 100644
+--- a/src/Backend/Modules/Analytics/Js/Analytics.js
++++ b/src/Backend/Modules/Analytics/Js/Analytics.js
+@@ -3,25 +3,18 @@
+  */
+ jsBackend.analytics =
+ {
+-    chartPieChart: null,
+-    chartDoubleMetricPerDay: null,
+-    init: function()
+-    {
+-        // variables
+-        jsBackend.analytics.chartPieChart = $('#chartPieChart');
+-        jsBackend.analytics.chartDoubleMetricPerDay = $('#chartDoubleMetricPerDay');
+-
+-        jsBackend.analytics.charts();
+-        jsBackend.analytics.chartPieChart();
+-        jsBackend.analytics.chartDoubleMetricPerDay();
+-    }
++    $chartPieChart: null,
++    $chartDoubleMetricPerDay: null
+ };
+ 
+ jsBackend.analytics.charts =
+ {
+     init: function()
+     {
+-        if (jsBackend.analytics.chartPieChart.length > 0 || jsBackend.analytics.chartDoubleMetricPerDay.length > 0)
++        jsBackend.analytics.$chartPieChart = $('#chartPieChart');
++        jsBackend.analytics.$chartDoubleMetricPerDay = $('#chartDoubleMetricPerDay');
++
++        if (jsBackend.analytics.$chartPieChart.length > 0 || jsBackend.analytics.$chartDoubleMetricPerDay.length > 0)
+         {
+             Highcharts.setOptions(
+             {
+@@ -39,6 +32,9 @@ jsBackend.analytics.charts =
+                 }
+             });
+         }
++
++        jsBackend.analytics.chartPieChart.init();
++        jsBackend.analytics.chartDoubleMetricPerDay.init();
+     }
+ };
+ 
+@@ -48,7 +44,7 @@ jsBackend.analytics.chartPieChart =
+ 
+     init: function()
+     {
+-        if (jsBackend.analytics.chartPieChart.length > 0) { jsBackend.analytics.chartPieChart.create(); }
++        if (jsBackend.analytics.$chartPieChart.length > 0) { jsBackend.analytics.$chartPieChart.create(); }
+     },
+ 
+     // add new chart
+@@ -71,9 +67,9 @@ jsBackend.analytics.chartPieChart =
+             });
+         });
+ 
+-        var containerWidth = jsBackend.analytics.chartPieChart.width();
++        var containerWidth = jsBackend.analytics.$chartPieChart.width();
+ 
+-        jsBackend.analytics.chartPieChart.chart = new Highcharts.Chart(
++        jsBackend.analytics.$chartPieChart.chart = new Highcharts.Chart(
+         {
+             chart: { renderTo: 'chartPieChart', height: 200, width: containerWidth, margin: [0, 160, 0, 0], backgroundColor:'transparent' },
+             credits: { enabled: false },
+@@ -107,7 +103,7 @@ jsBackend.analytics.chartPieChart =
+     // destroy chart
+     destroy: function()
+     {
+-        jsBackend.analytics.chartPieChart.chart.destroy();
++        jsBackend.analytics.$chartPieChart.chart.destroy();
+     }
+ };
+ 
+@@ -117,7 +113,7 @@ jsBackend.analytics.chartDoubleMetricPerDay =
+ 
+     init: function()
+     {
+-        if (jsBackend.analytics.chartDoubleMetricPerDay.length > 0) { jsBackend.analytics.chartDoubleMetricPerDay.create(); }
++        if (jsBackend.analytics.$chartDoubleMetricPerDay.length > 0) { jsBackend.analytics.chartDoubleMetricPerDay.create(); }
+     },
+ 
+     // add new chart
+@@ -187,8 +183,8 @@ jsBackend.analytics.chartDoubleMetricPerDay =
+     // destroy chart
+     destroy: function()
+     {
+-        jsBackend.analytics.chartDoubleMetricPerDay.chart.destroy();
++        jsBackend.analytics.$chartDoubleMetricPerDay.chart.destroy();
+     }
+ };
+ 
+-$(jsBackend.analytics.init);
++$(jsBackend.analytics.charts.init);
+-- 
+2.16.2
+
+From b804ab0fb0989626c12587ca0bdc524cd9537697 Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Mon, 7 May 2018 15:55:34 +0200
+Subject: [PATCH] Fix chartPieChart.create
+
+---
+ src/Backend/Modules/Analytics/Js/Analytics.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/Backend/Modules/Analytics/Js/Analytics.js b/src/Backend/Modules/Analytics/Js/Analytics.js
+index 2b5e7b8..6944286 100644
+--- a/src/Backend/Modules/Analytics/Js/Analytics.js
++++ b/src/Backend/Modules/Analytics/Js/Analytics.js
+@@ -44,7 +44,7 @@ jsBackend.analytics.chartPieChart =
+ 
+     init: function()
+     {
+-        if (jsBackend.analytics.$chartPieChart.length > 0) { jsBackend.analytics.$chartPieChart.create(); }
++        if (jsBackend.analytics.$chartPieChart.length > 0) { jsBackend.analytics.chartPieChart.create(); }
+     },
+ 
+     // add new chart
+-- 
+2.16.2
+

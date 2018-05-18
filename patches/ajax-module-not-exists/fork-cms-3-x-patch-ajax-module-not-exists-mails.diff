@@ -1,0 +1,27 @@
+From 3343e586e2dda6e928de9fc7d34abaf71af1aebc Mon Sep 17 00:00:00 2001
+From: Jeroen Desloovere <info@jeroendesloovere.be>
+Date: Wed, 21 Mar 2018 15:44:31 +0100
+Subject: [PATCH] Fetch AJAX error when there is no $module
+
+Website scrapers oftenly scrape the `frontend/ajax` URL
+Now we fetch a empty $module
+---
+ src/Frontend/Core/Engine/Ajax.php | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/Frontend/Core/Engine/Ajax.php b/src/Frontend/Core/Engine/Ajax.php
+index c7796a2e6..7bce2b078 100755
+--- a/src/Frontend/Core/Engine/Ajax.php
++++ b/src/Frontend/Core/Engine/Ajax.php
+@@ -141,7 +141,7 @@ class Ajax extends \KernelLoader implements \ApplicationInterface
+     public function setAction($value)
+     {
+         // check if module is set
+-        if ($this->getModule() === null) {
++        if ((string) $this->getModule() === '') {
+             throw new Exception('Module has not yet been set.');
+         }
+ 
+-- 
+2.15.1
+

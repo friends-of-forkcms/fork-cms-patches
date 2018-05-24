@@ -15,3 +15,4 @@ Please add your own used patches so we can help each other out here.
 * Fix Analytics charts
     * [For Fork CMS 5.0](fix-analytics-charts/fork-cms-5-0-analytics.diff)
     * [For Fork CMS 5.2.3](fix-analytics-charts/fork-cms-5-2-3-and-lower-fix-analytics.patch.txt)
+
